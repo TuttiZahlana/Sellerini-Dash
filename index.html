@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Sellerini Dash – 80 Wave Levels</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    body {
+      background: #050814;
+      overflow: hidden;
+      color: #fff;
+    }
+    canvas {
+      display: block;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      background: radial-gradient(circle at top, #1b3b7a 0, #050814 60%);
+      color: #fff;
+      z-index: 10;
+    }
+    .title {
+      font-size: 40px;
+      letter-spacing: 3px;
+      font-weight: 900;
+      text-transform: uppercase;
+      color: #00ff66;
+      text-shadow:
+        -3px -3px 0 #004422,
+        3px -3px 0 #004422,
+        -3px 3px 0 #004422,
+        3px 3px 0 #004422,
+        0 0 18px #00ff66;
+    }
+    .subtitle {
+      font-size: 14px;
+      color: #a8ffcf;
+      text-shadow: 0 0 8px #00ff6655;
+      text-align: center;
+    }
+    .btn {
+      padding: 9px 20px;
+      border-radius: 999px;
+      border: 2px solid #00ff66;
+      background: #04120a;
+      color: #eafff4;
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      cursor: pointer;
+      box-shadow: 0 0 12px #00ff6655;
+      transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.08s ease;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 18px #00ff66aa;
+      background: #062015;
+    }
+
+    .row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .icon-preview-box {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .icon-frame {
+      width: 80px;
+      height: 80px;
+      border-radius: 10px;
+      border: 2px solid #00ff66;
+      background: #020b10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 14px #00ff6655;
+    }
+    .icon-label {
+      font-size: 12px;
+      color: #a8ffcf;
+      max-width: 220px;
+    }
+
+    .level-select-container {
+      display: flex;
+      gap: 18px;
+      flex-wrap: wrap;
+      max-width: 1100px;
+      justify-content: center;
+    }
+    .difficulty-column {
+      flex: 1;
+      min-width: 200px;
+      background: #020814aa;
+      border-radius: 10px;
+      padding: 10px;
+      border: 1px solid #00ff6633;
+    }
+    .difficulty-title {
+      font-size: 13px;
+      font-weight: 800;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+    }
+    .difficulty-title.easy { color: #7dff7d; }
+    .difficulty-title.normal { color: #4fd0ff; }
+    .difficulty-title.hard { color: #ffdd55; }
+    .difficulty-title.insane { color: #ff7d7d; }
+    .difficulty-title.easydemon { color: #9bfffb; }
+    .difficulty-title.mediumdemon { color: #ff9bff; }
+    .difficulty-title.insanedemon { color: #ff6bcb; }
+    .difficulty-title.extremedemon { color: #ff3b3b; }
+
+    .level-btn {
+      width: 100%;
+      text-align: left;
+      padding: 6px 9px;
+      border-radius: 8px;
+      border: 1px solid #00ff6633;
+      background: #020b10;
+      color: #eafff4;
+      cursor: pointer;
+      font-size: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 3px;
+    }
+    .level-btn:hover {
+      border-color: #00ff66aa;
+      background: #041815;
+    }
+
+    .hud {
+      position: fixed;
+      top: 8px;
+      left: 12px;
+      font-size: 12px;
+      color: #a8ffcf;
+      text-shadow: 0 0 6px #000;
+      pointer-events: none;
+      z-index: 5;
+    }
+    .hud-right {
+      position: fixed;
+      top: 8px;
+      right: 12px;
+      font-size: 12px;
+      color: #a8ffcf;
+      text-shadow: 0 0 6px #000;
+      pointer-events: none;
+      z-index: 5;
+      text-align: right;
+    }
+
+    .death-overlay {
+      position: fixed;
+      inset: 0;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background: radial-gradient(circle at center, #000000aa 0, #000000ee 60%);
+      color: #fff;
+      z-index: 15;
+      text-align: center;
+    }
+
+    .countdown {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 40px;
+      font-weight: 900;
+      color: #00ff66;
+      text-shadow: 0 0 18px #00ff66aa;
+      pointer-events: none;
+      z-index: 12;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="game"></canvas>
+
+  <!-- MAIN MENU -->
+  <div id="menu" class="overlay">
+    <div class="title">SELLERINI DASH</div>
+    <div class="subtitle">Wave‑only · 80 levels · 8 difficulties</div>
+
+    <div class="icon-preview-box">
+      <div class="icon-frame">
+        <canvas id="icon-canvas" width="72" height="72"></canvas>
+      </div>
+      <div class="icon-label">
+        Level: <span id="icon-level-label">–</span><br />
+        Wave: <span id="icon-wave-label">–</span><br />
+        Use ← → in‑game to change wave.
+      </div>
+    </div>
+
+    <button class="btn" id="play-btn">Play</button>
+
+    <div class="subtitle">
+      Hold / tap to go up · Release to go down · 3s blank intro before every level
+    </div>
+  </div>
+
+  <!-- LEVEL SELECT -->
+  <div id="level-select" class="overlay" style="display:none;">
+    <div class="title" style="font-size:28px;">Select Level</div>
+    <div class="subtitle">80 wave levels · 10 per difficulty</div>
+    <div class="level-select-container" id="level-columns"></div>
+    <button class="btn" id="back-menu">Back to Menu</button>
+  </div>
+
+  <!-- HUD -->
+  <div class="hud">
+    <div id="hud-level">Level: -</div>
+    <div id="hud-attempts">Attempts: 0</div>
+    <div id="hud-wave">Wave: 1 / 20</div>
+  </div>
+  <div class="hud-right">
+    <div id="hud-diff">Diff: -</div>
+    <div id="hud-percent">0%</div>
+  </div>
+
+  <!-- COUNTDOWN -->
+  <div id="countdown" class="countdown">3</div>
+
+  <!-- DEATH / COMPLETE -->
+  <div id="death" class="death-overlay">
+    <div id="death-title" style="font-size:22px;font-weight:800;text-shadow:0 0 10px #000;">You Died</div>
+    <div id="death-detail" style="font-size:14px;color:#c8f7ff;"></div>
+    <div>
+      <button class="btn" id="retry-btn">Retry</button>
+      <button class="btn" id="levels-btn">Levels</button>
+      <button class="btn" id="menu-btn">Menu</button>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    const menu = document.getElementById('menu');
+    const playBtn = document.getElementById('play-btn');
+    const levelSelect = document.getElementById('level-select');
+    const levelColumns = document.getElementById('level-columns');
+    const backMenu = document.getElementById('back-menu');
+
+    const hudLevel = document.getElementById('hud-level');
+    const hudAttempts = document.getElementById('hud-attempts');
+    const hudDiff = document.getElementById('hud-diff');
+    const hudPercent = document.getElementById('hud-percent');
+    const hudWave = document.getElementById('hud-wave');
+
+    const deathOverlay = document.getElementById('death');
+    const deathTitle = document.getElementById('death-title');
+    const deathDetail = document.getElementById('death-detail');
+    const retryBtn = document.getElementById('retry-btn');
+    const levelsBtn = document.getElementById('levels-btn');
+    const menuBtn = document.getElementById('menu-btn');
+
+    const countdownEl = document.getElementById('countdown');
+
+    const iconCanvas = document.getElementById('icon-canvas');
+    const iconCtx = iconCanvas.getContext('2d');
+    const iconLevelLabel = document.getElementById('icon-level-label');
+    const iconWaveLabel = document.getElementById('icon-wave-label');
+
+    // AUDIO
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+    function ensureAudio() {
+      if (!audioCtx) audioCtx = new AudioContext();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+    function playBeep(freq, startTime, duration, volume = 0.15) {
+      ensureAudio();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.frequency.value = freq;
+      osc.type = 'square';
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      const t0 = audioCtx.currentTime + startTime;
+      osc.start(t0);
+      osc.stop(t0 + duration);
+      gain.gain.setValueAtTime(volume, t0);
+      gain.gain.linearRampToValueAtTime(0.0, t0 + duration);
+    }
+    function playSongForLevel(lvl) {
+      if (!lvl) return;
+      ensureAudio();
+      const meta = diffMeta[lvl.diffKey];
+      const tempo = meta.tempo;
+      const beat = 60 / tempo;
+      const notes = meta.notes;
+      notes.forEach((f, i) => {
+        playBeep(f, i * beat * 0.5, beat * 0.4, meta.volume);
+      });
+    }
+
+    // DIFFICULTIES
+    const diffOrder = [
+      'Easy',
+      'Normal',
+      'Hard',
+      'Insane',
+      'Easy Demon',
+      'Medium Demon',
+      'Insane Demon',
+      'Extreme Demon'
+    ];
+
+    const diffMeta = {
+      'Easy': {
+        key: 'easy',
+        speedBase: 7,
+        lengthBase: 2600,
+        chaosBase: 0.18,
+        waveForce: -0.7,
+        tempo: 120,
+        notes: [440, 440, 392, 440, 523, 494],
+        volume: 0.13
+      },
+      'Normal': {
+        key: 'normal',
+        speedBase: 8,
+        lengthBase: 3200,
+        chaosBase: 0.3,
+        waveForce: -1.0,
+        tempo: 135,
+        notes: [523, 494, 440, 494, 587, 523],
+        volume: 0.14
+      },
+      'Hard': {
+        key: 'hard',
+        speedBase: 9,
+        lengthBase: 3800,
+        chaosBase: 0.45,
+        waveForce: -1.25,
+        tempo: 145,
+        notes: [587, 587, 523, 494, 523, 659],
+        volume: 0.15
+      },
+      'Insane': {
+        key: 'insane',
+        speedBase: 10,
+        lengthBase: 4400,
+        chaosBase: 0.6,
+        waveForce: -1.5,
+        tempo: 155,
+        notes: [659, 587, 659, 698, 659, 587, 523, 587],
+        volume: 0.16
+      },
+      'Easy Demon': {
+        key: 'easydemon',
+        speedBase: 10.5,
+        lengthBase: 4800,
+        chaosBase: 0.7,
+        waveForce: -1.7,
+        tempo: 160,
+        notes: [440, 523, 587, 659, 587, 523],
+        volume: 0.17
+      },
+      'Medium Demon': {
+        key: 'mediumdemon',
+        speedBase: 11,
+        lengthBase: 5200,
+        chaosBase: 0.8,
+        waveForce: -1.9,
+        tempo: 165,
+        notes: [523, 659, 698, 784, 698, 659],
+        volume: 0.18
+      },
+      'Insane Demon': {
+        key: 'insanedemon',
+        speedBase: 11.5,
+        lengthBase: 5600,
+        chaosBase: 0.9,
+        waveForce: -2.1,
+        tempo: 170,
+        notes: [659, 784, 880, 784, 698, 659],
+        volume: 0.19
+      },
+      'Extreme Demon': {
+        key: 'extremedemon',
+        speedBase: 12,
+        lengthBase: 6000,
+        chaosBase: 1.0,
+        waveForce: -2.4,
+        tempo: 175,
+        notes: [784, 880, 988, 880, 784, 698],
+        volume: 0.2
+      }
+    };
+
+    // LEVELS: 80 total, 10 per difficulty
+    const levels = [];
+    let levelIdCounter = 1;
+    const diffNames = Object.keys(diffMeta);
+    diffNames.forEach(diffName => {
+      const meta = diffMeta[diffName];
+      for (let i = 0; i < 10; i++) {
+        const id = levelIdCounter++;
+        const speed = meta.speedBase + i * 0.25;
+        const length = meta.lengthBase + i * 200;
+        const chaos = meta.chaosBase + i * 0.03;
+        levels.push({
+          id,
+          name: diffName + ' ' + (i + 1),
+          diff: diffName,
+          diffKey: diffName,
+          speed,
+          length,
+          chaos,
+          special: (diffName === 'Extreme Demon' && i === 9) // last one = special
+        });
+      }
+    });
+
+    // WAVE ICONS
+    const waveIconSets = {};
+
+    function seededRandom(seed) {
+      let x = seed % 2147483647;
+      if (x <= 0) x += 2147483646;
+      return function() {
+        x = (x * 16807) % 2147483647;
+        return (x - 1) / 2147483646;
+      };
+    }
+
+    function generateWaveIconsForLevel(levelId) {
+      const rand = seededRandom(levelId * 99991 + 7);
+      const icons = [];
+      for (let i = 1; i <= 20; i++) {
+        const detail = i;
+        const spikes = Math.floor(detail / 4);
+        const innerLines = Math.floor(detail / 5);
+        const cutNotches = Math.floor(detail / 6);
+        const glowStrength = 4 + detail * 0.6;
+        const colorHue = (levelId * 17 + i * 9) % 360;
+        icons.push({
+          detail,
+          spikes,
+          innerLines,
+          cutNotches,
+          glowStrength,
+          colorHue
+        });
+      }
+      waveIconSets[levelId] = icons;
+    }
+
+    levels.forEach(l => generateWaveIconsForLevel(l.id));
+
+    function drawWaveIcon(ctx, iconConfig, size) {
+      const { detail, spikes, innerLines, cutNotches, glowStrength, colorHue } = iconConfig;
+      const half = size / 2;
+      ctx.clearRect(0, 0, size, size);
+      ctx.save();
+      ctx.translate(half, half);
+
+      const baseColor = `hsl(${colorHue}, 90%, 60%)`;
+      const outlineColor = `hsl(${colorHue}, 90%, 30%)`;
+
+      ctx.shadowColor = baseColor;
+      ctx.shadowBlur = glowStrength;
+
+      const baseWidth = size * 0.7;
+      const baseHeight = size * 0.6;
+      const leftX = -baseWidth / 2;
+      const rightX = baseWidth / 2;
+      const midY = baseHeight / 2;
+      const topY = -baseHeight / 2;
+
+      ctx.beginPath();
+      ctx.moveTo(leftX, midY);
+      ctx.lineTo(rightX, 0);
+      ctx.lineTo(leftX, topY);
+      ctx.closePath();
+      ctx.fillStyle = baseColor;
+      ctx.fill();
+
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = outlineColor;
+      ctx.stroke();
+
+      if (spikes > 0) {
+        ctx.beginPath();
+        const spikeBaseY = topY + 4;
+        const spikeHeight = 6 + detail * 0.3;
+        for (let s = 0; s < spikes; s++) {
+          const t = (s + 1) / (spikes + 1);
+          const sx = leftX + (rightX - leftX) * t * 0.7;
+          ctx.moveTo(sx - 3, spikeBaseY);
+          ctx.lineTo(sx, spikeBaseY - spikeHeight);
+          ctx.lineTo(sx + 3, spikeBaseY);
+        }
+        ctx.closePath();
+        ctx.fillStyle = outlineColor;
+        ctx.fill();
+      }
+
+      if (innerLines > 0) {
+        ctx.lineWidth = 1.2;
+        ctx.strokeStyle = `hsla(${colorHue}, 90%, 85%, 0.9)`;
+        for (let j = 0; j < innerLines; j++) {
+          const t = (j + 1) / (innerLines + 1);
+          ctx.beginPath();
+          ctx.moveTo(leftX + 4, topY + baseHeight * t);
+          ctx.lineTo(rightX - 4, topY + baseHeight * t * 0.7);
+          ctx.stroke();
+        }
+      }
+
+      if (cutNotches > 0) {
+        ctx.fillStyle = '#050814';
+        const notchSize = 3 + detail * 0.15;
+        for (let n = 0; n < cutNotches; n++) {
+          const t = (n + 1) / (cutNotches + 1);
+          const nx = leftX + (rightX - leftX) * t * 0.8;
+          const ny = midY;
+          ctx.beginPath();
+          ctx.moveTo(nx - notchSize, ny);
+          ctx.lineTo(nx, ny - notchSize);
+          ctx.lineTo(nx + notchSize, ny);
+          ctx.closePath();
+          ctx.fill();
+        }
+      }
+
+      ctx.restore();
+    }
+
+    let previewLevelId = 1;
+    let previewWaveIndex = 0;
+    function updateIconPreview() {
+      const lvl = levels.find(l => l.id === previewLevelId) || levels[0];
+      const icons = waveIconSets[lvl.id];
+      const icon = icons[previewWaveIndex];
+      drawWaveIcon(iconCtx, icon, 72);
+      iconLevelLabel.textContent = '#' + lvl.id + ' ' + lvl.name;
+      iconWaveLabel.textContent = (previewWaveIndex + 1) + ' / 20 (detail ' + icon.detail + ')';
+    }
+    updateIconPreview();
+
+    function buildLevelSelect() {
+      levelColumns.innerHTML = '';
+      diffOrder.forEach(diffName => {
+        const col = document.createElement('div');
+        const meta = diffMeta[diffName];
+        col.className = 'difficulty-column';
+
+        const title = document.createElement('div');
+        title.className = 'difficulty-title ' + meta.key;
+        title.textContent = diffName;
+        col.appendChild(title);
+
+        levels.filter(l => l.diff === diffName).forEach(lvl => {
+          const btn = document.createElement('button');
+          btn.className = 'level-btn';
+          btn.innerHTML = `<span>#${lvl.id} · ${lvl.name}</span><span>${lvl.diff}</span>`;
+          btn.addEventListener('click', () => {
+            startLevel(lvl);
+          });
+          col.appendChild(btn);
+        });
+
+        levelColumns.appendChild(col);
+      });
+    }
+    buildLevelSelect();
+
+    function showMenu() {
+      menu.style.display = 'flex';
+      levelSelect.style.display = 'none';
+      deathOverlay.style.display = 'none';
+    }
+    function showLevelSelect() {
+      menu.style.display = 'none';
+      levelSelect.style.display = 'flex';
+      deathOverlay.style.display = 'none';
+    }
+
+    playBtn.addEventListener('click', () => {
+      showLevelSelect();
+    });
+    backMenu.addEventListener('click', () => {
+      showMenu();
+    });
+
+    levelsBtn.addEventListener('click', () => {
+      deathOverlay.style.display = 'none';
+      showLevelSelect();
+    });
+    menuBtn.addEventListener('click', () => {
+      deathOverlay.style.display = 'none';
+      showMenu();
+    });
+
+    // GAME STATE
+    let running = false;
+    let attempt = 0;
+    let currentLevel = null;
+
+    const player = {
+      x: 180,
+      y: 0,
+      vy: 0,
+      size: 34,
+      angle: 0
+    };
+
+    let groundY = canvas.height - 160;
+    let obstacles = [];
+    let scrollSpeed = 8;
+    let time = 0;
+    let distance = 0;
+    let levelLength = 3000;
+    let holding = false;
+
+    const selectedWaveIndexPerLevel = {};
+    function getSelectedWaveIndex(levelId) {
+      if (selectedWaveIndexPerLevel[levelId] == null) {
+        selectedWaveIndexPerLevel[levelId] = 0;
+      }
+      return selectedWaveIndexPerLevel[levelId];
+    }
+    function setSelectedWaveIndex(levelId, idx) {
+      selectedWaveIndexPerLevel[levelId] = idx;
+    }
+
+    function resetPlayer() {
+      groundY = canvas.height - 160;
+      player.y = groundY - player.size * 1.5;
+      player.vy = 0;
+      player.angle = 0;
+    }
+
+    function waveForceForLevel(lvl) {
+      return diffMeta[lvl.diffKey].waveForce;
+    }
+
+    function showCountdown() {
+      countdownEl.style.display = 'block';
+      countdownEl.textContent = '3';
+      setTimeout(() => countdownEl.textContent = '2', 1000);
+      setTimeout(() => countdownEl.textContent = '1', 2000);
+      setTimeout(() => {
+        countdownEl.style.display = 'none';
+      }, 3000);
+    }
+
+    function startLevel(lvl) {
+      currentLevel = lvl;
+      attempt++;
+      running = false;
+      deathOverlay.style.display = 'none';
+      menu.style.display = 'none';
+      levelSelect.style.display = 'none';
+
+      time = 0;
+      distance = 0;
+      scrollSpeed = lvl.speed;
+      levelLength = lvl.length;
+      groundY = canvas.height - 160;
+      resetPlayer();
+      obstacles = [];
+
+      hudLevel.textContent = 'Level: #' + lvl.id + ' ' + lvl.name;
+      hudDiff.textContent = 'Diff: ' + lvl.diff;
+      hudAttempts.textContent = 'Attempts: ' + attempt;
+
+      const waveIdx = getSelectedWaveIndex(lvl.id);
+      hudWave.textContent = 'Wave: ' + (waveIdx + 1) + ' / 20';
+
+      previewLevelId = lvl.id;
+      previewWaveIndex = waveIdx;
+      updateIconPreview();
+
+      playSongForLevel(lvl);
+      showCountdown();
+
+      setTimeout(() => {
+        spawnWavePatternForLevel(lvl);
+        running = true;
+      }, 3000);
+    }
+
+    function showDeath(msg, title = 'You Died') {
+      running = false;
+      deathTitle.textContent = title;
+      deathDetail.textContent = msg;
+      deathOverlay.style.display = 'flex';
+    }
+
+    retryBtn.addEventListener('click', () => {
+      if (currentLevel) startLevel(currentLevel);
+    });
+
+    function spawnWavePatternForLevel(lvl) {
+      obstacles = [];
+      const rand = seededRandom(lvl.id * 999999 + 1337);
+
+      let x = 260 + 400; // extra blank space after intro
+      const maxY = groundY - 40;
+      const minY = 80;
+
+      const baseTunnelHeight = 120 + rand() * 120;
+      let currentMidY = (maxY + minY) / 2 + (rand() * 80 - 40);
+
+      const segmentCount = 40 + Math.floor(rand() * 40);
+
+      for (let i = 0; i < segmentCount; i++) {
+        const segWidth = 150 + rand() * 220;
+
+        const heightMod = rand() * (0.25 + lvl.chaos * 0.2);
+        const tunnelH = Math.max(70, baseTunnelHeight * (1 - heightMod));
+
+        const offset = (rand() * 160 - 80) * (0.6 + lvl.chaos * 0.6);
+        currentMidY += offset;
+        currentMidY = Math.max(minY + tunnelH / 2 + 10, Math.min(maxY - tunnelH / 2 - 10, currentMidY));
+
+        const topY = currentMidY - tunnelH / 2;
+        const bottomY = currentMidY + tunnelH / 2;
+
+        obstacles.push({
+          x,
+          w: segWidth,
+          topY,
+          bottomY,
+          type: 'tunnel'
+        });
+
+        x += segWidth;
+      }
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' || e.code === 'ArrowUp') {
+        e.preventDefault();
+        holding = true;
+      }
+      if (e.code === 'ArrowLeft') {
+        if (currentLevel) {
+          const lvlId = currentLevel.id;
+          let idx = getSelectedWaveIndex(lvlId);
+          idx = (idx - 1 + 20) % 20;
+          setSelectedWaveIndex(lvlId, idx);
+          hudWave.textContent = 'Wave: ' + (idx + 1) + ' / 20';
+          previewLevelId = lvlId;
+          previewWaveIndex = idx;
+          updateIconPreview();
+        }
+      }
+      if (e.code === 'ArrowRight') {
+        if (currentLevel) {
+          const lvlId = currentLevel.id;
+          let idx = getSelectedWaveIndex(lvlId);
+          idx = (idx + 1) % 20;
+          setSelectedWaveIndex(lvlId, idx);
+          hudWave.textContent = 'Wave: ' + (idx + 1) + ' / 20';
+          previewLevelId = lvlId;
+          previewWaveIndex = idx;
+          updateIconPreview();
+        }
+      }
+    });
+    window.addEventListener('keyup', (e) => {
+      if (e.code === 'Space' || e.code === 'ArrowUp') {
+        e.preventDefault();
+        holding = false;
+      }
+    });
+    canvas.addEventListener('pointerdown', () => {
+      holding = true;
+    });
+    canvas.addEventListener('pointerup', () => {
+      holding = false;
+    });
+    canvas.addEventListener('pointerleave', () => {
+      holding = false;
+    });
+
+    function update() {
+      if (running && currentLevel) {
+        time += 1;
+        distance += scrollSpeed;
+
+        const wf = waveForceForLevel(currentLevel);
+        if (holding) {
+          player.vy += wf;
+        } else {
+          player.vy -= wf * 0.4;
+        }
+        player.vy += 0.9 * 0.15;
+        player.y += player.vy;
+
+        const topLimit = 40;
+        const bottomLimit = groundY - 40;
+        if (player.y < topLimit) {
+          player.y = topLimit;
+          player.vy *= -0.2;
+        }
+        if (player.y > bottomLimit) {
+          player.y = bottomLimit;
+          player.vy *= -0.2;
+        }
+
+        player.angle = (holding ? -0.6 : 0.4) + player.vy * 0.02;
+
+        for (const o of obstacles) {
+          o.x -= scrollSpeed;
+        }
+        obstacles = obstacles.filter(o => o.x + o.w > -200);
+
+        const px = player.x + player.size * 0.5;
+        const py = player.y + player.size * 0.5;
+        for (const o of obstacles) {
+          if (o.type === 'tunnel') {
+            if (px > o.x && px < o.x + o.w) {
+              if (py < o.topY + 10 || py > o.bottomY - 10) {
+                showDeath('You left the tunnel on Level ' + currentLevel.id + '.');
+                break;
+              }
+            }
+          }
+        }
+
+        const pct = Math.max(0, Math.min(100, Math.floor((distance / levelLength) * 100)));
+        hudPercent.textContent = pct + '%';
+
+        if (distance >= levelLength + 200) {
+          showDeath('GG! You beat Level ' + currentLevel.id + ' (' + currentLevel.name + ').', 'Level Complete!');
+        }
+      }
+
+      draw();
+      requestAnimationFrame(update);
+    }
+
+    function drawBackground() {
+      ctx.fillStyle = '#050814';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const stripeCount = 12;
+      const speedFactor = currentLevel ? (0.4 + currentLevel.chaos * 0.3) : 0.4;
+      for (let i = 0; i < stripeCount; i++) {
+        const x = ((i * 140) - (time * speedFactor)) % (canvas.width + 220) - 110;
+        ctx.fillStyle = i % 2 === 0 ? '#0b1b3a55' : '#07102455';
+        ctx.fillRect(x, 0, 90, canvas.height);
+      }
+
+      groundY = canvas.height - 160;
+      ctx.fillStyle = '#04120a';
+      ctx.fillRect(0, groundY, canvas.width, canvas.height - groundY);
+
+      ctx.strokeStyle = '#00ff66';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(0, groundY);
+      ctx.lineTo(canvas.width, groundY);
+      ctx.stroke();
+    }
+
+    function drawPlayer() {
+      if (!currentLevel) return;
+      const icons = waveIconSets[currentLevel.id];
+      const idx = getSelectedWaveIndex(currentLevel.id);
+      const icon = icons[idx];
+
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = 72;
+      tempCanvas.height = 72;
+      const tctx = tempCanvas.getContext('2d');
+      drawWaveIcon(tctx, icon, 72);
+
+      ctx.save();
+      ctx.translate(player.x + player.size / 2, player.y + player.size / 2);
+      ctx.rotate(player.angle);
+      ctx.shadowColor = `hsl(${icon.colorHue}, 90%, 60%)`;
+      ctx.shadowBlur = icon.glowStrength;
+      ctx.drawImage(tempCanvas, -player.size / 2, -player.size / 2, player.size, player.size);
+      ctx.restore();
+    }
+
+    function drawObstacles() {
+      for (const o of obstacles) {
+        if (o.type === 'tunnel') {
+          ctx.fillStyle = '#020814';
+          ctx.fillRect(o.x, 0, o.w, o.topY);
+          ctx.fillRect(o.x, o.bottomY, o.w, canvas.height - o.bottomY);
+
+          ctx.strokeStyle = '#00ff66aa';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(o.x, o.topY);
+          ctx.lineTo(o.x + o.w, o.topY);
+          ctx.moveTo(o.x, o.bottomY);
+          ctx.lineTo(o.x + o.w, o.bottomY);
+          ctx.stroke();
+        }
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawBackground();
+      if (currentLevel && (running || deathOverlay.style.display === 'flex')) {
+        drawObstacles();
+        drawPlayer();
+      }
+    }
+
+    showMenu();
+    update();
+  </script>
+</body>
+</html>
